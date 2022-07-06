@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.mintimate.img2d.api.dao.ImgDao">
+    <resultMap id="imgSingleResultMap" type="cn.mintimate.img2d.api.dto.SingleIMG_DTO">
+        <id column="id" property="id"/>
+        <result column="img_name" property="imgName"/>
+        <result column="img_host_path" property="imgHostPath"/>
+        <result column="cate_id" property="cateId"/>
+        <result column="cate_name" property="cateName"/>
+        <result column="user_id" property="userId"/>
+        <result column="username" property="username"/>
+        <result column="user_role" property="userRole"/>
+        <result column="user_avatar_path" property="userAvatarPath"/>
+        <result column="user_space" property="userSpace"/>
+        <result column="create_time" property="createTime"/>
+        <collection property="tagDTOList" ofType="cn.mintimate.img2d.api.dto.ImgTagDTO">
+            <id column="tag_id" property="id"/>
+            <result column="tag_name" property="tagName"/>
+        </collection>
+    </resultMap>
+    <resultMap id="imgSingleResultAdminMap" type="cn.mintimate.img2d.api.dto.AdminSingleImageDTO">
+        <id column="id" property="id"/>
+        <result column="img_name" property="imgName"/>
+        <result column="img_host_path" property="imgHostPath"/>
+        <result column="cate_id" property="cateId"/>
+        <result column="cate_name" property="cateName"/>
+        <result column="user_id" property="userId"/>
+        <result column="username" property="username"/>
+        <result column="create_time" property="createTime"/>
+        <result column="is_audit" property="isAudit"/>
+        <result column="del_flag" property="delFlag"/>
+        <result column="perceptual_hash" property="perceptualHash"/>
+        <collection property="tagDTOList" ofType="cn.mintimate.img2d.api.dto.ImgTagDTO">
+            <id column="tag_id" property="id"/>
+            <result column="tag_name" property="tagName"/>
+        </collection>
+    </resultMap>
+
+    <select id="getRandomImgList" resultType="cn.mintimate.img2d.api.dto.WaterFallIMG_DTO">
+        SELECT img.id,
+               img.img_name,
+               img.img_thumbnail_path,
+               u.id,
+               u.username,
+               u.user_avatar_path
+        FROM img2d_img img
+                 LEFT JOIN img2d_user u ON img.user_id = u.id
+        WHERE img.del_flag!=1 AND img.is_audit=1
+        ORDER BY rand()
+            limit #{param1};
+    </select>
+
+    <select id="getHPushList" resultType="string">
+        select perceptual_hash
+        from img2d_img
+    </select>
+
+    <select id="getSingleIMGWithoutAudit" resultMap="imgSingleResultMap">
+        SELECT img.id id,
+               img_name,
+               img_host_path,
+               img.cate_id,
+               c.cate_name,
+               u.id   user_id,
+               u.username,
+               u.user_role,
+               u.user_avatar_path,
+               u.user_space,
+               img.create_time,
+               t.id AS tag_id,
+               t.tag_name
+        FROM img2d_img img
+                 LEFT JOIN img2d_user u ON img.user_id = u.id
+                 LEFT JOIN img2d_img_category c ON img.cate_id = c.id
+                 LEFT JOIN img2d_img_tags atg ON img.id = atg.img_id
+                 LEFT JOIN img2d_img_tag t ON t.id = atg.tag_id
+        WHERE img.id = #{imgId}
+    </select>
+
+
+    <select id="getSingleIMG" resultMap="imgSingleResultMap">
+        SELECT img.id id,
+               img_name,
+               img_host_path,
+               img.cate_id,
+               c.cate_name,
+               u.id   user_id,
+               u.username,
+               u.user_role,
+               u.user_avatar_path,
+               u.user_space,
+               img.create_time,
+               t.id AS tag_id,
+               t.tag_name
+        FROM img2d_img img
+                 LEFT JOIN img2d_user u ON img.user_id = u.id
+                 LEFT JOIN img2d_img_category c ON img.cate_id = c.id
+                 LEFT JOIN img2d_img_tags atg ON img.id = atg.img_id
+                 LEFT JOIN img2d_img_tag t ON t.id = atg.tag_id
+        WHERE img.id = #{imgId} AND img.del_flag!=1 AND img.is_audit=1
+    </select>
+
+    <select id="getImageByPage" resultType="cn.mintimate.img2d.api.dto.WaterFallIMG_DTO">
+        SELECT img.id,
+        img.img_name,
+        img.img_thumbnail_path,
+        u.id,
+        u.username,
+        u.user_avatar_path
+        FROM img2d_img img
+        LEFT JOIN img2d_user u ON img.user_id=u.id
+        <if test="cateId != null">
+            WHERE img.cate_id=#{cateId} AND img.del_flag!=1 AND img.is_audit=1
+        </if>
+        <if test="cateId == null">
+            WHERE img.del_flag!=1 AND img.is_audit=1
+        </if>
+        ORDER BY img.id DESC
+        LIMIT #{current}, #{size}
+    </select>
+
+    <select id="getImageListByIdList" resultType="cn.mintimate.img2d.api.dto.WaterFallIMG_DTO">
+        SELECT img.id,
+        img.img_name,
+        img.img_thumbnail_path,
+        u.id,
+        u.username,
+        u.user_avatar_path
+        FROM img2d_img img
+        LEFT JOIN img2d_user u ON img.user_id=u.id
+        WHERE img.id IN
+        <foreach collection="idList" index="" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+        AND img.del_flag!=1 AND img.is_audit=1
+        LIMIT #{current}, #{size}
+    </select>
+
+    <select id="getImageInfo" resultMap="imgSingleResultAdminMap">
+        SELECT img.id id,
+               img_name,
+               img_host_path,
+               img.cate_id,
+               c.cate_name,
+               u.id   user_id,
+               u.username,
+               img.create_time,
+               img.is_audit,
+               img.del_flag,
+               t.id AS tag_id,
+               t.tag_name
+        FROM img2d_img img
+                 LEFT JOIN img2d_user u ON img.user_id = u.id
+                 LEFT JOIN img2d_img_category c ON img.cate_id = c.id
+                 LEFT JOIN img2d_img_tags atg ON img.id = atg.img_id
+                 LEFT JOIN img2d_img_tag t ON t.id = atg.tag_id
+        WHERE img.id=#{imgId}
+    </select>
+
+    <select id="getImageHistoryForUser" resultMap="imgSingleResultAdminMap">
+        SELECT img.id id,
+               img_name,
+               img_host_path,
+               img.cate_id,
+               c.cate_name,
+               img.create_time,
+               img.is_audit,
+               t.id AS tag_id,
+               t.tag_name
+        FROM img2d_img img
+                 LEFT JOIN img2d_user u ON img.user_id = u.id
+                 LEFT JOIN img2d_img_category c ON img.cate_id = c.id
+                 LEFT JOIN img2d_img_tags atg ON img.id = atg.img_id
+                 LEFT JOIN img2d_img_tag t ON t.id = atg.tag_id
+        WHERE u.id=#{userId} AND img.del_flag!=1
+        ORDER BY img.is_audit ASC, img.id DESC
+    </select>
+
+    <select id="getImageInfoList" resultMap="imgSingleResultAdminMap">
+        SELECT img.id id,
+               img_name,
+               img_host_path,
+               img.cate_id,
+               c.cate_name,
+               u.id   user_id,
+               u.username,
+               img.create_time,
+               img.is_audit,
+               img.del_flag,
+               img.perceptual_hash,
+               t.id AS tag_id,
+               t.tag_name
+        FROM img2d_img img
+                 LEFT JOIN img2d_user u ON img.user_id = u.id
+                 LEFT JOIN img2d_img_category c ON img.cate_id = c.id
+                 LEFT JOIN img2d_img_tags atg ON img.id = atg.img_id
+                 LEFT JOIN img2d_img_tag t ON t.id = atg.tag_id
+        ORDER BY img.is_audit ASC, img.del_flag, img.id DESC
+    </select>
+
+    <update id="updateAudit">
+        UPDATE img2d_img img SET is_audit = #{isAudit} WHERE id in
+        <foreach collection="idList" index="" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </update>
+</mapper>

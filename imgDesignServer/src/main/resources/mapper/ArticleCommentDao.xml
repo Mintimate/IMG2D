@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.mintimate.img2d.api.dao.ArticleCommentDao">
+    <select id="listComments" resultType="cn.mintimate.img2d.api.dto.CommentDTO">
+        SELECT
+        u.username,
+        u.user_avatar_path,
+        u.user_space,
+        c.user_id,
+        c.id,
+        c.comment_content,
+        c.create_time
+        FROM
+        img2d_article_comment c
+        JOIN img2d_user u ON c.user_id = u.id
+        WHERE
+        <if test="articleImgId != null">
+            article_img_id = #{articleImgId}
+        </if>
+        <if test="articleImgId == null">
+            article_img_id IS NULL
+        </if>
+        AND c.is_review = 1
+        AND c.is_delete!=1
+        AND parent_id IS NULL
+        ORDER BY
+        c.id DESC
+        LIMIT #{current},#{size}
+    </select>
+    <select id="listReplies" resultType="cn.mintimate.img2d.api.dto.ReplyDTO">
+        SELECT
+        *
+        FROM
+        (
+        SELECT
+        c.user_id,
+        u.username,
+        u.user_avatar_path,
+        u.user_space,
+        c.reply_user_id,
+        r.username AS reply_username,
+        r.user_space AS reply_user_space,
+        c.id,
+        c.parent_id,
+        c.comment_content,
+        c.create_time,
+        row_number () over ( PARTITION BY parent_id ORDER BY create_time ASC ) row_num
+        FROM
+        img2d_article_comment c
+        JOIN img2d_user u ON c.user_id = u.id
+        JOIN img2d_user r ON c.reply_user_id = r.id
+        WHERE
+        c.is_review = 1
+        AND c.is_delete!=1
+        AND parent_id IN
+        (
+        <foreach collection="commentIdList" item="commentId" separator=",">
+            #{commentId}
+        </foreach>
+        )
+        ) t
+        WHERE
+        4 > row_num
+    </select>
+    <select id="listReplyCountByCommentId" resultType="cn.mintimate.img2d.api.dto.ReplyCountDTO">
+        SELECT
+        parent_id as comment_id,
+        count(1) AS reply_count
+        FROM
+        img2d_article_comment
+        WHERE
+        is_review = 1
+        AND is_delete!=1
+        AND
+        parent_id IN
+        (
+        <foreach collection="commentIdList" item="commentId" separator=",">
+            #{commentId}
+        </foreach>
+        )
+        GROUP BY
+        parent_id
+    </select>
+    <select id="listRepliesByCommentId" resultType="cn.mintimate.img2d.api.dto.ReplyDTO">
+        SELECT c.user_id,
+               u.username,
+               u.user_avatar_path,
+               u.user_space,
+               c.reply_user_id,
+               r.username   as reply_nickname,
+               r.user_space as reply_web_site,
+               c.id,
+               c.parent_id,
+               c.comment_content,
+               c.create_time
+        FROM img2d_article_comment c
+                 JOIN img2d_user u ON c.user_id = u.id
+                 JOIN img2d_user r ON c.reply_user_id = r.id
+        WHERE c.is_review = 1
+          AND c.is_delete!=1
+          AND parent_id = #{commentId}
+        ORDER BY c.id ASC
+            LIMIT #{current}, #{size}
+    </select>
+
+    <select id="listCommentsForAdmin" resultType="cn.mintimate.img2d.api.dto.CommentDTO">
+        SELECT u.username,
+               u.user_avatar_path,
+               u.user_space,
+               c.user_id,
+               c.id,
+               c.article_img_id,
+               c.comment_content,
+               c.create_time,
+               c.is_delete
+        FROM img2d_article_comment c
+                 JOIN img2d_user u ON c.user_id = u.id
+        WHERE parent_id IS NULL
+        ORDER BY c.id DESC
+    </select>
+    <select id="listRepliesForAdmin" resultType="cn.mintimate.img2d.api.dto.ReplyDTO">
+        SELECT
+        *
+        FROM
+        (
+        SELECT
+        c.user_id,
+        u.username,
+        u.user_avatar_path,
+        u.user_space,
+        c.reply_user_id,
+        r.username AS reply_username,
+        r.user_space AS reply_user_space,
+        c.id,
+        c.parent_id,
+        c.comment_content,
+        c.create_time,
+        c.is_delete,
+        row_number () over ( PARTITION BY parent_id ORDER BY create_time ASC ) row_num
+        FROM
+        img2d_article_comment c
+        JOIN img2d_user u ON c.user_id = u.id
+        JOIN img2d_user r ON c.reply_user_id = r.id
+        WHERE
+        c.is_review = 1
+        AND
+        parent_id IN
+        (
+        <foreach collection="commentIdList" item="commentId" separator=",">
+            #{commentId}
+        </foreach>
+        )
+        ) t
+    </select>
+</mapper>

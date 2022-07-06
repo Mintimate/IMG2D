@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.mintimate.img2d.api.dao.ImgCategoryDao">
+    <select id="listCateForAdmin" resultType="cn.mintimate.img2d.api.dto.CateDTO">
+        SELECT
+            cate.id,
+            cate.cate_name,
+            u.username as create_by,
+            cate.create_time
+        FROM
+             img2d_img_category AS cate
+             LEFT JOIN img2d_user AS u ON cate.create_by=u.id
+    </select>
+</mapper>

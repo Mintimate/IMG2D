@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.mintimate.img2d.api.dao.ImgTagDao">
+    <select id="getImageByPage" resultType="cn.mintimate.img2d.api.dto.WaterFallIMG_DTO">
+        SELECT
+            distinct img.id,
+            img.img_name,
+            img.img_thumbnail_path,
+            u.id as user_id,
+            u.username,
+            u.user_avatar_path
+        FROM img2d_img img JOIN
+            (SELECT img2d_img_tags.img_id,
+                    img2d_img_tags.tag_id,
+                    img2d_img_tag.tag_name
+            FROM img2d_img_tags
+                JOIN
+                    img2d_img_tag
+                ON img2d_img_tags.tag_id=img2d_img_tag.id
+            WHERE tag_name IN
+                <foreach collection="tagList" index="" item="item" open="(" separator="," close=")">
+                      #{item}
+                  </foreach>
+            ) AS t
+        ON img.id=t.img_id
+        JOIN img2d_user AS u ON img.user_id=u.id
+        WHERE img.del_flag!=1 AND img.is_audit=1
+        LIMIT #{current}, #{size}
+    </select>
+    <select id="getImageByPageCount" resultType="integer">
+        SELECT
+        count(distinct img_id)
+        FROM img2d_img img JOIN
+        (SELECT img2d_img_tags.img_id,
+        img2d_img_tags.tag_id,
+        img2d_img_tag.tag_name
+        FROM img2d_img_tags
+        LEFT JOIN
+        img2d_img_tag
+        ON img2d_img_tags.tag_id=img2d_img_tag.id
+        WHERE tag_name IN
+        <foreach collection="tagList" index="" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+        ) AS t
+        ON img.id=t.img_id
+    </select>
+</mapper>

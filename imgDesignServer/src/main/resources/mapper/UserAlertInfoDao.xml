@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.mintimate.img2d.api.dao.UserAlertInfoDao">
+    <select id="getUserMessage" resultType="cn.mintimate.img2d.api.dto.UserAlertInfoDTO">
+        SELECT id,
+               user_id,
+               type,
+               message,
+               has_read,
+               create_time
+        FROM img2d_user_alert_info
+        WHERE user_id=#{userid}
+        AND is_delete!=1
+        ORDER BY has_read,create_time
+    </select>
+    <select id="getHavenReadCount" resultType="integer">
+        SELECT count(*)
+        FROM img2d_user_alert_info
+        WHERE user_id=#{userId}
+          AND is_delete!=1 AND has_read!=1
+    </select>
+</mapper>

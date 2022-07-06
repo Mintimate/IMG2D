@@ -1,0 +1,239 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.mintimate.img2d.api.dao.ArticleDao">
+
+    <resultMap id="articleResultMap" type="cn.mintimate.img2d.api.dto.ArticleDTO">
+        <id column="id" property="id"/>
+        <result column="user_id" property="userId"/>
+        <result column="username" property="username"/>
+        <result column="cate_name" property="cateName"/>
+        <result column="article_banner" property="articleBanner"/>
+        <result column="article_title" property="articleTitle"/>
+        <result column="article_desc" property="articleDesc"/>
+        <result column="article_content" property="articleContent"/>
+        <result column="type" property="type"/>
+        <result column="original_url" property="originalUrl"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="is_delete" property="isDelete"/>
+        <collection property="tagDTOList" ofType="cn.mintimate.img2d.api.dto.ArticleTagDTO">
+            <id column="tag_id" property="id"/>
+            <result column="tag_name" property="tagName"/>
+        </collection>
+    </resultMap>
+
+    <resultMap id="articleHomeResultMap" type="cn.mintimate.img2d.api.dto.ArticleHomeDTO">
+        <id column="id" property="id"/>
+        <result column="user_id" property="userId"/>
+        <result column="username" property="username"/>
+        <result column="category_id" property="categoryId"/>
+        <result column="cate_name" property="cateName"/>
+        <result column="article_banner" property="articleBanner"/>
+        <result column="article_title" property="articleTitle"/>
+        <result column="article_desc" property="articleDesc"/>
+        <result column="create_time" property="createTime"/>
+        <result column="type" property="type"/>
+        <result column="is_top" property="isTop"/>
+        <collection property="tagDTOList" ofType="cn.mintimate.img2d.api.dto.ArticleTagDTO">
+            <id column="tag_id" property="id"/>
+            <result column="tag_name" property="tagName"/>
+        </collection>
+    </resultMap>
+
+    <select id="listArticlesHome" resultMap="articleHomeResultMap">
+        SELECT a.id
+             , user_id
+             , username
+             , a.category_id
+             , cate_name
+             , article_banner
+             , article_title
+             , article_desc
+             , a.create_time
+             , a.type
+             , a.is_top
+             , t.id AS tag_id
+             , t.tag_name
+        FROM (
+                 SELECT id
+                      , user_id
+                      , category_id
+                      , article_banner
+                      , article_title
+                      , article_desc
+                      , type
+                      , is_top
+                      , create_time
+                 FROM img2d_article
+                 WHERE is_delete = 0
+                 ORDER BY is_top DESC, id DESC
+                     LIMIT #{current}, #{size}
+             ) a
+                 JOIN img2d_article_category c ON a.category_id = c.id
+                 JOIN img2d_article_tags atg ON a.id = atg.article_id
+                 JOIN img2d_article_tag t ON t.id = atg.tag_id
+                 JOIN img2d_user u ON u.id = a.user_id
+        ORDER BY a.is_top DESC, a.id DESC
+    </select>
+
+    <select id="listArticlesHomeByType" resultMap="articleHomeResultMap">
+        SELECT a.id
+             , user_id
+             , username
+             , a.category_id
+             , cate_name
+             , article_banner
+             , article_title
+             , article_desc
+             , a.create_time
+             , a.type
+             , a.is_top
+             , t.id AS tag_id
+             , t.tag_name
+        FROM (
+                 SELECT id
+                      , user_id
+                      , category_id
+                      , article_banner
+                      , article_title
+                      , article_desc
+                      , type
+                      , is_top
+                      , create_time
+                 FROM img2d_article
+                 WHERE is_delete = 0
+                 AND category_id=#{categoryId}
+                 ORDER BY is_top DESC, id DESC
+                     LIMIT #{current}, #{size}
+             ) a
+                 JOIN img2d_article_category c ON a.category_id = c.id
+                 JOIN img2d_article_tags atg ON a.id = atg.article_id
+                 JOIN img2d_article_tag t ON t.id = atg.tag_id
+                 JOIN img2d_user u ON u.id = a.user_id
+        ORDER BY a.is_top DESC, a.id DESC
+    </select>
+
+    <select id="getArticleById" resultMap="articleResultMap">
+        SELECT a.id,
+               a.user_id,
+               c.cate_name,
+               article_banner,
+               article_title,
+               article_desc,
+               article_content,
+               type,
+               a.original_url,
+               a.create_time,
+               a.update_time,
+               t.id AS tag_id,
+               t.tag_name
+        FROM img2d_article a
+                 JOIN img2d_article_category c ON a.category_id = c.id
+                 JOIN img2d_article_tags atg ON a.id = atg.article_id
+                 JOIN img2d_article_tag t ON t.id = atg.tag_id
+        WHERE a.id = #{articleId}
+          AND a.is_delete = 0
+    </select>
+
+    <select id="getPostInfoList" resultMap="articleResultMap">
+        SELECT a.id,
+               a.user_id,
+               u.username,
+               c.cate_name,
+               article_banner,
+               article_title,
+               article_desc,
+               article_content,
+               type,
+               a.original_url,
+               a.create_time,
+               a.update_time,
+               a.is_delete,
+               t.id AS tag_id,
+               t.tag_name
+        FROM img2d_article a
+                 LEFT JOIN img2d_article_category c ON a.category_id = c.id
+                 LEFT JOIN img2d_user u ON a.user_id = u.id
+                 LEFT JOIN img2d_article_tags atg ON a.id = atg.article_id
+                 LEFT JOIN img2d_article_tag t ON t.id = atg.tag_id
+        ORDER BY a.is_delete DESC, a.id DESC
+    </select>
+
+    <select id="listArticlesHomeBySearch" resultMap="articleHomeResultMap">
+        SELECT
+            a.id
+             , user_id
+             , username
+             , a.category_id
+             , cate_name
+             , article_banner
+             , article_title
+             , article_desc
+             , a.create_time
+             , a.type
+             , a.is_top
+             , t.id AS tag_id
+             , t.tag_name
+        FROM
+            (SELECT id
+                  , user_id
+                  , category_id
+                  , article_banner
+                  , article_title
+                  , article_desc
+                  , type
+                  , is_top
+                  , create_time
+             FROM img2d_article
+             WHERE MATCH (article_title,article_desc,article_content) AGAINST (#{keyWord})
+               AND is_delete = 0
+            ) AS a
+                JOIN img2d_article_category c ON a.category_id = c.id
+                JOIN img2d_article_tags atg ON a.id = atg.article_id
+                JOIN img2d_article_tag t ON t.id = atg.tag_id
+                JOIN img2d_user u ON u.id = a.user_id
+    </select>
+
+    <select id="randArticlesHome" resultMap="articleHomeResultMap">
+        SELECT a.id
+             , user_id
+             , username
+             , a.category_id
+             , cate_name
+             , article_banner
+             , article_title
+             , article_desc
+             , a.create_time
+             , a.type
+             , a.is_top
+             , t.id AS tag_id
+             , t.tag_name
+        FROM (
+                 SELECT id
+                      , user_id
+                      , category_id
+                      , article_banner
+                      , article_title
+                      , article_desc
+                      , type
+                      , is_top
+                      , create_time
+                 FROM img2d_article
+                 WHERE is_delete = 0
+             ) a
+                 JOIN img2d_article_category c ON a.category_id = c.id
+                 JOIN img2d_article_tags atg ON a.id = atg.article_id
+                 JOIN img2d_article_tag t ON t.id = atg.tag_id
+                 JOIN img2d_user u ON u.id = a.user_id
+            GROUP BY a.id
+            ORDER BY rand()
+            LIMIT 5
+    </select>
+
+    <update id="updateAudit">
+        UPDATE img2d_article SET is_delete = #{isAudit} WHERE id in
+        <foreach collection="idList" index="" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </update>
+</mapper>

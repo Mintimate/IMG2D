@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.mintimate.img2d.api.dao.UserDao">
+    <select id="selectByUsername" resultType="cn.mintimate.img2d.api.entity.User">
+        select *
+        from img2d_user
+        where username = #{param1}
+    </select>
+    <select id="selectByEmail" resultType="cn.mintimate.img2d.api.entity.User">
+        select *
+        from img2d_user
+        where user_email = #{param1}
+    </select>
+    <select id="findUserByEmailAndPasswd" resultType="cn.mintimate.img2d.api.entity.User">
+        select *
+        from img2d_user
+        where user_email=#{param1} and password=#{param2}
+        limit 1
+    </select>
+    <select id="findUserByTeleAndPasswd" resultType="cn.mintimate.img2d.api.entity.User">
+        select *
+        from img2d_user
+        where user_tele=#{param1} and password=#{param2}
+            limit 1
+    </select>
+    <select id="findUserByUserName" resultType="cn.mintimate.img2d.api.entity.User">
+        select *
+        from img2d_user
+        where username=#{param1}
+            limit 1
+    </select>
+    <select id="getUserBaseInfoWithoutPasswordByID" resultType="cn.mintimate.img2d.api.entity.User">
+        select id,user_email,username,user_signature,user_space,user_avatar_path
+        from img2d_user
+        where id=#{param1}
+            limit 1
+    </select>
+    <select id="getUserBaseInfoWithoutPasswordByUsername" resultType="cn.mintimate.img2d.api.entity.User">
+        select id,user_email,username,user_signature,user_space,user_avatar_path
+        from img2d_user
+        where username=#{param1}
+            limit 1
+    </select>
+    <select id="getUserSeniorInfoWithoutPasswordByID" resultType="cn.mintimate.img2d.api.entity.User">
+        select id,username,user_tele,user_tele_check,user_qq_openid
+        from img2d_user
+        where id=#{param1}
+            limit 1
+    </select>
+    <select id="getFollowerListByUserId" resultType="cn.mintimate.img2d.api.dto.UserSpaceDTO">
+        select id,username,user_avatar_path,user_signature
+        FROM img2d_user
+        WHERE id IN
+        <foreach collection="idList" index="" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+        LIMIT #{current}, #{size}
+    </select>
+</mapper>
