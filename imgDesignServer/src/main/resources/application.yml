@@ -1,0 +1,61 @@
+server:
+  port: 8088
+spring:
+  mail:
+    # 邮件服务器
+    host: 
+    username: 
+    password: 
+    properties:
+      ## 超时设置，防止阻塞，有些是无限时间
+      mail:
+        smtp:
+          writetimeout=5000:
+          timeout=3000:
+          connectiontimeout=5000:
+  # 数据库和连接池配置
+  datasource:
+    url: jdbc:mysql://localhost:3306/imgDesign?useUnicode=true&serverTimezone=Asia/Shanghai
+    username: imgDesignServer
+    password:
+    driver-class-name: org.mariadb.jdbc.Driver
+    hikari:
+      connection-init-sql: SET NAMES utf8mb4
+  # Redis配置
+  redis:
+    port: 6379
+    jedis:
+      pool:
+        ## 最大空闲连接池
+        max-idle: 20
+        ## 最大连接池
+        max-active: 50
+        ## 连接池最大阻塞等待时间
+        max-wait: 3000
+        ## 最小空闲
+        min-idle: 2
+    timeout: 5000
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 50MB
+      max-request-size: 50MB
+  mvc:
+    # 设置静态资源目录
+    static-path-pattern: /SystemData/**
+  web:
+    resources:
+      # 设置静态资源目录
+      static-locations: classpath:/static,classpath:/public,classpath:/resources,classpath:/META-INF/resources,file:SystemData
+mybatis-plus:
+  global-config:
+    db-config:
+      # 雪花ID
+      id-type: assign_id
+  # mapper扫描
+  mapper-locations: classpath:/mapper/*.xml
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+# 引入日志配置文件
+logging:
+  config: classpath:log4j2.xml
